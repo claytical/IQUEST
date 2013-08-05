@@ -1,0 +1,298 @@
+@charset "utf-8";
+/* CSS Document */
+
+.increase
+{
+	width:79%;
+}
+
+* {
+padding: 0;
+margin: 0;
+}
+
+body {
+	background-image:url(css/5.jpg);
+background-repeat: repeat-x; 
+font-family:Verdana, Geneva, sans-serif;
+    font-size: 11px;
+}
+html, body {
+	height:100%;
+}
+
+#box-table-a
+{
+	/*font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
+	font-size: 12px;
+	margin: 45px;*/
+	width:100%;
+	/*width: 480px;*/
+	text-align: left;
+	border-collapse: collapse;
+}
+#box-table-a th
+{
+	font-size: 13px;
+	font-weight: normal;
+	padding: 2px;
+	background:#999;/* #b9c9fe;*/
+	border-top: 2px solid #333; /*#aabcfe;*/
+	border-bottom: 1px solid #fff;
+	color:#FFF; /*#039; */
+}
+#box-table-a td
+{
+	padding: 3px;
+	background:#CCC;/* #e8edff;*/ 
+	border-bottom: 1px solid #fff;
+	color: #669;
+	border-top: 1px solid transparent;
+}
+#box-table-a tr:hover td
+{
+	background:#066; /*#d0dafd;*/
+	color:#FFF;/* #339;*/
+}
+
+
+
+
+.norm
+{
+	font-family:Verdana, Geneva, sans-serif;
+    font-size: 11px;
+    text-align: left;
+    color: #0000;
+	/* border-color:#FF9900; */
+	border-width:1px;
+	border-style:solid;
+}
+
+
+.gradientBoxesWithOuterShadows { 
+height: 200px;
+width: 400px; 
+padding: 20px;
+background-color: white; 
+
+/* outer shadows  (note the rgba is red, green, blue, alpha) */
+-webkit-box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.4); 
+-moz-box-shadow: 0px 1px 6px rgba(23, 69, 88, .5);
+box-shadow: 5px 5px 15px #888;
+
+
+/* rounded corners */
+-webkit-border-radius: 12px;
+-moz-border-radius: 7px; 
+border-radius: 7px;
+
+/* gradients */
+background: -webkit-gradient(linear, left top, left bottom, 
+color-stop(0%, white), color-stop(15%, white), color-stop(100%, #D7E9F5)); 
+background: -moz-linear-gradient(top, white 0%, white 55%, #D5E4F3 130%); 
+}
+
+.v{
+	-moz-border-radius: 20px;
+    -webkit-border-radius: 20px;
+    -khtml-border-radius: 20px;
+	/* behavior: url(../css/border-radius.htc);*/
+    border-radius: 20px;
+	
+	
+	border-top-right-radius: 7px;
+border-top-left-radius: 7px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+}
+
+.shadow {
+	-moz-box-shadow: 3px 3px 4px #000;
+	-webkit-box-shadow: 3px 3px 4px #000;
+	box-shadow: 3px 3px 4px #000;
+	/* For IE 8 */
+	-ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000')";
+	/* For IE 5.5 - 7 */
+	filter: progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000');
+}
+.rounded-corners {
+     -moz-border-radius: 10px;
+    -webkit-border-radius: 10px;
+    -khtml-border-radius: 10px;
+	/* behavior: url(../css/border-radius.htc);*/
+    border-radius: 10px;
+	height:50px; 
+	width:100px;
+	background-color:#0F0;
+}
+ 
+ #header
+{
+
+	
+	height: 14%;
+
+	background-color:#FFF;
+	margin-bottom: 1px;
+	background-image:url(../pics/site/gepc_logo.jpg);
+	background-repeat:no-repeat;
+	background-position:left
+}
+
+#nav
+{
+	float: left;
+	/*width: 13.8%;*/
+	height: 93%;
+	background-color: #999;
+	margin-bottom: 1px;
+	margin-left:0.2%;
+	-moz-border-radius: 20px;
+    -webkit-border-radius: 20px;
+    -khtml-border-radius: 20px;
+	/* behavior: url(../css/border-radius.htc);*/
+    border-radius: 20px;
+	visibility:hidden;
+	
+	
+	border-top-right-radius: 0px;
+	border-top-left-radius: 0px;
+	border-bottom-right-radius: 10px;
+	border-bottom-left-radius: 0px;
+}
+
+#contentMap
+{
+	width: 100%; height: 93%;  margin-bottom:1px;
+	
+}
+
+
+#con
+{
+	width: 13%; height: 50%; 
+	 margin-bottom:1px;
+	/*background:#FFF;*/
+	
+	z-index:100;
+	position:fixed;
+	left:87%;
+	/*background-color:transparent;  */
+	color:#003;
+	
+	font-weight:500;
+	background-color:#ffffff;
+
+  opacity:0.8;
+  filter:alpha(opacity=80);
+  top:50%;
+}
+.g
+{
+	color:#FFF;
+	padding:2px;
+}
+
+#contentDetail
+{
+	
+	width: 20.7%; height: 93%; float:left; min-height:93%;
+	margin-right:0.3%;
+}
+/*.highlight
+{
+	background-color: #FFFFCC;
+	color: #000000;
+
+} */
+
+.highlight { background-color: yellow }
+.normal { background-color:inherit}
+
+tr { /*background-color:#CFF */}
+  .initial { background-color: #CFF; color:#000000 }
+  /*.normal { background-color: #FFF }*/
+  .highlight { background-color: #CF9 }
+
+
+
+
+
+
+#footer
+{
+	clear: both;
+	height: 3%;
+	background-color: #666;
+	margin-bottom: 10px;
+	color:#FFF;
+}
+
+form {  /* set width in form, not fieldset (still takes up more room w/ fieldset width */
+ /* font:100% verdana,arial,sans-serif;*/
+ 
+  margin: 0;
+  padding: 0;
+  min-width: 500px;
+  max-width: 600px;
+  width: 660px; 
+  
+}
+
+form fieldset {
+  / * clear: both; note that this clear causes inputs to break to left in ie5.x mac, commented out */
+  border-color: #000;
+  border-width: 1px;
+  border-style: solid;
+  padding: 10px;        /* padding in fieldset support spotty in IE */
+  margin: 0;
+}
+
+form fieldset legend {
+	font-size:1em; /* bump up legend font size, not too large or it'll overwrite border on left */
+                       /* be careful with padding, it'll shift the nice offset on top of border  */
+}
+
+form label { 
+	display: block;  /* block float the labels to left column, set a width */
+	float: left; 
+	width: 150px; 
+	padding: 0; 
+	margin: 5px 0 0; /* set top margin same as form input - textarea etc. elements */
+	text-align: right; 
+}
+
+form fieldset label:first-letter { /* use first-letter pseudo-class to underline accesskey, note that */
+	text-decoration:underline;    /* Firefox 1.07 WIN and Explorer 5.2 Mac don't support first-letter */
+                                    /* pseudo-class on legend elements, but do support it on label elements */
+                                    /* we instead underline first letter on each label element and accesskey */
+                                    /* each input. doing only legends would  lessens cognitive load */
+                                   /* opera breaks after first letter underlined legends but not labels */
+}
+
+form input, form textarea, form select {
+	/* display: inline; inline display must not be set or will hide submit buttons in IE 5x mac */
+	width:auto;      /* set width of form elements to auto-size, otherwise watch for wrap on resize */
+	margin:5px 0 0 10px; /* set margin on left of form elements rather than right of
+                              label aligns textarea better in IE */
+}
+
+form input#reset {
+	margin-left:0px; /* set margin-left back to zero on reset button (set above) */
+}
+
+textarea { overflow: auto; }
+
+form small {
+	display: block;
+	margin: 0 0 5px 160px; /* instructions/comments left margin set to align w/ right column inputs */
+	padding: 1px 3px;
+	font-size: 88%;
+}
+
+form .required{font-weight:bold;} /* uses class instead of div, more efficient */
+
+form br {
+	clear:left; /* setting clear on inputs didn't work consistently, so brs added for degrade */
+}
