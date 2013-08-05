@@ -1,5 +1,37 @@
 function drawVisualization() {
   // Create and populate the data table.
+
+  $.getJSON('api.php?set=water&neighborhood=101&start=2005-01-01&end=2015-01-01', function(data) {
+
+    var colorData = google.visualization.arrayToDataTable(data);
+    new google.visualization.LineChart(document.getElementById('color')).
+        draw(colorData, {
+                title:"Water Color",
+                curveType: "function",
+                    legend: {alignment: "left", position: "right"},
+
+                    width: $('body').width() - 20, height: 400
+                    });
+      });
+
+  $.getJSON('api.php?set=taste&neighborhood=101&start=2005-01-01&end=2015-01-01', function(data) {
+
+    var tasteData = google.visualization.arrayToDataTable(data);
+    new google.visualization.LineChart(document.getElementById('taste')).
+        draw(tasteData, {
+                title:"Taste / Odor",
+                curveType: "function",
+                    legend: {alignment: "left", position: "right"},
+
+                    width: $('body').width() - 20, height: 400
+                    });
+      });
+
+
+
+
+};
+/*
  var flowData = google.visualization.arrayToDataTable([
 ['x', 'Over 12 hours of flow', '4-12 hours', 'Up to 3 hours', 'No flow'],
 ['8/31', 100, 200, 141, 200],
@@ -10,7 +42,8 @@ function drawVisualization() {
 ['9/5', 205, 270, 189, 200],
 
   ]);
-
+*/
+/*
   var colorData = google.visualization.arrayToDataTable([
     ['Date', 'Clear', 'Discolored or Cloudy'],
   ['08/31/2013',35,65],
@@ -38,15 +71,6 @@ function drawVisualization() {
   ]);
 
   // Create and draw the visualization.
-  new google.visualization.LineChart(document.getElementById('flow')).
-      draw(flowData, {
-              title:"Hours of Flow",
-              curveType: "function",
-                  legend: {alignment: "left", position: "right"},
-
-                  width: $('body').width() - 20, height: 400
-                  }
-          );
 
 
   new google.visualization.LineChart(document.getElementById('color')).
@@ -81,7 +105,7 @@ function drawVisualization() {
           );
 }
 
-      
+      */
       
 
       google.setOnLoadCallback(drawVisualization);
