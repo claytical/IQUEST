@@ -6,7 +6,9 @@
     <!-- Bootstrap -->
     <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
     <link href="css/custom.css" rel="stylesheet" media="screen">
+    <script type='text/javascript' src='js/OpenLayers.js'></script>
     <script type="text/javascript" src="http://www.google.com/jsapi"></script>
+    <script src="http://maps.google.com/maps/api/js?sensor=false&v=3.2"></script>
     <script type="text/javascript">
       google.load('visualization', '1', {packages: ['corechart']});
     </script>
@@ -18,8 +20,7 @@
 
     <div class="container">
 
-      <div class="panel">
-        <h1>Map Here</h1>
+      <div id="contentMap">
       </div>
 
       <div class="body-content">
@@ -44,42 +45,31 @@
 
           <ul class="nav nav-tabs">
             <li>
-              <a data-toggle="tab" href="#color">
+              <a data-toggle="tab" href="#water">
                   <h4>Water Color</h4>
-                  <p>Clear<span class="pull-right">###</span></p>
-                  <p>Discolored<span class="pull-right">###</span></p>
-
                 </a>
             </li>
             
             <li>
               <a data-toggle="tab" href="#taste">
                  <h4>Taste / Odor</h4>
-                  <p>Good<span class="pull-right">###</span></p>
-                  <p>Bad<span class="pull-right">###</span></p>              
               </a>
             </li>
             
             <li>
               <a data-toggle="tab" href="#particles">
                   <h4>Particles</h4>
-                  <p>None<span class="pull-right">###</span></p>
-                  <p>Some<span class="pull-right">###</span></p>
               </a>
             </li>
             <li>
               <a data-toggle="tab" href="#flow">
                   <h4>Hours of Flow</h4>
-                  <p>12<span class="pull-right">###</span></p>
-                  <p>4-12<span class="pull-right">###</span></p>
-                  <p>3<span class="pull-right">###</span></p>
-                  <p>None<span class="pull-right">###</span></p>
               </a>
               </li>
           </ul>
 
           <div id="charts" class="tab-content">
-            <div class="tab-pane" id="color"></div>
+            <div class="tab-pane" id="water"></div>
             <div class="tab-pane" id="taste"></div>
             <div class="tab-pane" id="particles"></div>
             <div class="tab-pane" id="flow"></div>
@@ -100,6 +90,4 @@
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="js/bootstrap.min.js"></script>
     <script src="js/iquest.js"></script>
-
-  </body>
 </html>

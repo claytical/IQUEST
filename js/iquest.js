@@ -1,12 +1,9 @@
-function drawVisualization() {
-  // Create and populate the data table.
-
-  $.getJSON('api.php?set=water&neighborhood=101&start=2005-01-01&end=2015-01-01', function(data) {
-
-    var colorData = google.visualization.arrayToDataTable(data);
-    new google.visualization.LineChart(document.getElementById('color')).
-        draw(colorData, {
-                title:"Water Color",
+function drawNeighborhoodLinechart(chartTitle, set, neighborhood, start, end) {
+  $.getJSON('api.php?set='+set+'&neighborhood='+neighborhood+'&start='+start+'&end='+end, function(data) {
+    var chartData = google.visualization.arrayToDataTable(data);
+    new google.visualization.LineChart(document.getElementById(set)).
+        draw(chartData, {
+                title:chartTitle,
                 curveType: "function",
                     legend: {alignment: "left", position: "right"},
 
@@ -14,98 +11,121 @@ function drawVisualization() {
                     });
       });
 
-  $.getJSON('api.php?set=taste&neighborhood=101&start=2005-01-01&end=2015-01-01', function(data) {
-
-    var tasteData = google.visualization.arrayToDataTable(data);
-    new google.visualization.LineChart(document.getElementById('taste')).
-        draw(tasteData, {
-                title:"Taste / Odor",
-                curveType: "function",
-                    legend: {alignment: "left", position: "right"},
-
-                    width: $('body').width() - 20, height: 400
-                    });
-      });
-
-
-
-
-};
-/*
- var flowData = google.visualization.arrayToDataTable([
-['x', 'Over 12 hours of flow', '4-12 hours', 'Up to 3 hours', 'No flow'],
-['8/31', 100, 200, 141, 200],
-['9/1', 102, 244, 130, 180],
-['9/2', 150, 256, 190, 210],
-['9/3', 170, 233, 180, 177],
-['9/4', 244, 100, 300, 190],
-['9/5', 205, 270, 189, 200],
-
-  ]);
-*/
-/*
-  var colorData = google.visualization.arrayToDataTable([
-    ['Date', 'Clear', 'Discolored or Cloudy'],
-  ['08/31/2013',35,65],
-  ['09/01/2013',55,45],
-  ['09/02/2013',30,70],
-  ['09/03/2013',60,40]
-  ]);
-  
-
-  var particleData = google.visualization.arrayToDataTable([
-    ['Date', 'None', 'Some Particles'],
-  ['08/31/2013',35,65],
-  ['09/01/2013',55,45],
-  ['09/02/2013',30,70],
-  ['09/03/2013',60,40]
-  ]);
-
-
-    var tasteData = google.visualization.arrayToDataTable([
-    ['Date', 'Good', 'Tastes or smells bad'],
-  ['08/31/2013',35,65],
-  ['09/01/2013',55,45],
-  ['09/02/2013',30,70],
-  ['09/03/2013',60,40]
-  ]);
-
-  // Create and draw the visualization.
-
-
-  new google.visualization.LineChart(document.getElementById('color')).
-      draw(colorData, {
-              title:"Water Color",
-              curveType: "function",
-                  legend: {alignment: "left", position: "right"},
-
-                  width: $('body').width() - 20, height: 400
-                  }
-          );
-
- new google.visualization.LineChart(document.getElementById('taste')).
-      draw(tasteData, {
-              title:"Odor/Taste",
-              curveType: "function",
-                  legend: {alignment: "left", position: "right"},
-
-                  width: $('body').width() - 20, height: 400
-                  }
-          );
-
-
-  new google.visualization.LineChart(document.getElementById('particles')).
-      draw(particleData, {
-              title:"Particles",
-              curveType: "function",
-                  legend: {alignment: "left", position: "right"},
-
-                  width: $('body').width() - 20, height: 400
-                  }
-          );
 }
 
-      */
+function drawVisualization() {
+  init();
+  // Create and populate the data table.
+  drawNeighborhoodLinechart("Water Color", "water", 101, "2005-01-01", "2015-01-01"); 
+  drawNeighborhoodLinechart("Taste / Odor", "taste", 101, "2005-01-01", "2015-01-01"); 
+  drawNeighborhoodLinechart("Particles", "particles", 101, "2005-01-01", "2015-01-01"); 
+//  drawNeighborhoodLinechart("Water Color", "taste", 101, "2005-01-01", "2015-01-01"); 
+
+
+
+
+}
+ var map, a, vector_style_2, Hazard;
+ 
+ 
+ function init() {
+   
+  
+   $("#contentMap").html('');
+   $("#contentMap").css('width', '100%');
+   var options = {
+            projection: new OpenLayers.Projection("EPSG:900913"),
+            displayProjection: new OpenLayers.Projection("EPSG:4326"),
+            units: "m",
+            numZoomLevels: 18,
+            maxResolution: 'auto',
+            maxExtent: new OpenLayers.Bounds(-20037508, -20037508, 20037508, 20037508.34)//, 
       
+    };
+    map = new OpenLayers.Map('contentMap',options);
+    
+    var vector_style = new OpenLayers.Style({
+      'cursor': 'pointer',
+      'fillColor': '#787878',
+      'fillOpacity': .6,
+      'fontColor':'#FFFFFF',
+      'label': '${District}', 
+      'pointRadius': 2,
+      'strokeColor': '#232323',
+      'fontSize': '10px', 
+      'labelAlign' :  'c'
+      });
+      
+      vector_style_2 = new OpenLayers.Style({
+      'cursor': 'pointer',
+      'fillColor': '#000000',
+      'fontColor': '#343434',
+      'pointRadius': 6,
+      'strokeColor': '#232323', 
+      'labelAlign' :  'tr'
+      });
+
+    var gmap = new OpenLayers.Layer.Google(
+        "Google Streets",
+          {isBaseLayer: true, numZoomLevels: 40, sphericalMercator: true}
+      );
+    map.addLayer(gmap);
+    
+    var Hazard = new OpenLayers.Layer.Vector("iQuest", {
+            projection: map.displayProjection,
+      eventListeners: {
+        'beforefeatureadded': draw_event, 
+        'featureselected': click_event 
+      },
+      
+        strategies: [new OpenLayers.Strategy.BBOX(),  new OpenLayers.Strategy.Fixed], 
+            protocol: new OpenLayers.Protocol.HTTP({
+                url:"kml/ama.kml",
+    format: new OpenLayers.Format.KML({
+                    extractStyles: false, 
+                    extractAttributes: true,
+                 
+                })
+            })
+        });
+  
+  
+        map.addLayer(Hazard);
+      var vector_style_map_ = new OpenLayers.StyleMap({'default': vector_style, 'select' : vector_style_2});
+    
+    
+      Hazard.styleMap = vector_style_map_;
+      
+      var layControl =  new OpenLayers.Control.LayerSwitcher({});
+      map.addControl(layControl);
+      
+      var select_feature_control = new OpenLayers.Control.SelectFeature(Hazard);
+      map.addControl(select_feature_control);
+      select_feature_control.activate();
+           
+  var point = new OpenLayers.LonLat(-23070.48765315,617902.95096767); 
+    map.setCenter(point, 14); 
+     
+        if(!map.getCenter()){
+           map.zoomToMaxExtent();
+        }
+
+    }
+  
+  function click_event(evt)
+  {
+    alert(evt.feature.attributes.Name.value );
+         
+    
+  }
+  
+  function draw_event(evt)
+    {
+//      var a = evt.feature.attributes;
+//      a.District = a.Name.value;
+      return true;
+    }
+
+
 
       google.setOnLoadCallback(drawVisualization);
