@@ -1,0 +1,13 @@
+html, body {
+	height:100%;
+}
+
+#custom_date {
+	display: none;
+}
+#contentMap
+{
+	 height: 300px;
+}
+#infoBox {
+}
