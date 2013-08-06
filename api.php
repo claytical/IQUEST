@@ -4,6 +4,7 @@ $dataSet = $_REQUEST['set'];
 $neighborhood = $_REQUEST['neighborhood'];
 $startDate = $_REQUEST['start'];
 $endDate = $_REQUEST['end'];
+$usePercentage = FALSE;
 
 if ($dataSet == "flow") {
 	echo getFlowData($neighborhood, $startDate, $endDate);
@@ -15,6 +16,34 @@ if ($dataSet == "water" || $dataSet == "particles" || $dataSet == "taste") {
 if ($dataSet == "location") {
 	echo getLocationData($neighborhood);
 }
+if ($dataSet == "neighborhoods") {
+	echo getNeighborhoods();
+}
+
+function getNeighborhoods() {
+	include("connect.php");
+	$query = "SELECT id, location FROM locations ORDER BY location ASC";
+	$result = $mysqli->query($query);
+	foreach($result as $row) {
+		$obj = new stdClass;
+		$obj->id = $row["id"];
+		$obj->location = $row["location"];
+		$data[] = $obj;
+	}
+	return json_encode($data);
+}
+
+function getFrequencyData() {
+	include("connect.php");
+//	$query = "SELECT COUNT(water) as reports, location, date FROM finalData GROUP BY location, date";
+	$date_query = "SELECT DISTINCT(date) as date FROM finalData";
+	$dates = $mysqli->query($date_query);
+	foreach ($dates as $date) {
+//		$date[0]
+	}
+	$result = $mysqli->query($query);
+	$data[] = ["date", ""]
+}
 
 function getLocationData($loc_num) {
 	include("connect.php");
@@ -23,16 +52,16 @@ function getLocationData($loc_num) {
 	$customer_query = "SELECT DISTINCT(number) as customers from finalData WHERE location = $loc_num";
 	$result = $mysqli->query($customer_query);
 	$location->customers = $result->num_rows;
-	$row = $result->fetch_array();
-	$report_query = "SELECT water as reports FROM finalData WHERE location = $loc_num  ORDER BY date ASC";
+	$report_query = "SELECT water as reports, date FROM finalData WHERE location = $loc_num  ORDER BY date ASC";
 	$result = $mysqli->query($report_query);
+	$row = $result->fetch_array();
 	$location->reports = $result->num_rows;
-	$location->collection_start = $row['date'];
+	$location->collection_start = $row["date"];
 
 	return json_encode($location);
 }
 
-function getFlowData($location, $startingDate = NULL, $endingDate = NULL) {
+function getFlowData($location, $startingDate = NULL, $endingDate = NULL, $percentage = TRUE) {
 	include("connect.php");
 
 	$query = "SELECT SUM(twelve) as twelve, SUM(four) as four, SUM(three) as three, SUM(none) as none, date FROM (
@@ -52,7 +81,7 @@ function getFlowData($location, $startingDate = NULL, $endingDate = NULL) {
 }
 
 
-function getData($set, $location, $startingDate = NULL, $endingDate = NULL) {
+function getData($set, $location, $startingDate = NULL, $endingDate = NULL, $percentage = TRUE) {
 
 	include("connect.php");
 
@@ -94,12 +123,19 @@ function getData($set, $location, $startingDate = NULL, $endingDate = NULL) {
 		$result = $mysqli->query($query);
 		$data[] = ["date", $setArray[$set]["description"][0], $setArray[$set]["description"][1]];
 
+		if (percentage) {
+			foreach($result as $row) {
+				$total = (intval($row["good"]) + intval($row["bad"]));
+				$good = ($row["good"] / $total) * 100;
+				$bad = ($row["bad"] / $total) * 100;
+				$data[] = array($row["date"], $good + "%", $bad + "%");
+			}
+		}
+		else {
+			foreach($result as $row) {
+				$data[] = array($row["date"], $row["good"], $row["bad"]);
+			}
 
-		foreach($result as $row) {
-			$total = (intval($row["good"]) + intval($row["bad"]));
-			$good = ($row["good"] / $total) * 100;
-			$bad = ($row["bad"] / $total) * 100;
-			$data[] = array($row["date"], $good + "%", $bad + "%");
 		}
 	}
 

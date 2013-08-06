@@ -10,4 +10,11 @@ html, body {
 	 height: 300px;
 }
 #infoBox {
+	display: none;
+}
+#chartOptions {
+	display: none;
+}
+#view_all {
+	display: none;
 }
