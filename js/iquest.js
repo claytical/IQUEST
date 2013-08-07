@@ -2,16 +2,20 @@
  var loc;
  var noCharts = true;
 
+
 function drawNeighborhoodLineChart(chartTitle, set, neighborhood, start, end) {
   $.getJSON('api.php?set='+set+'&neighborhood='+neighborhood+'&start='+start+'&end='+end+"&percent=FALSE", function(data) {
     var chartData = google.visualization.arrayToDataTable(data);
+    var showEvery = parseInt(chartData.getNumberOfRows() / 4);      
+
       if(typeof data[1] != 'undefined') {
 
         new google.visualization.LineChart(document.getElementById(set + '_line')).
             draw(chartData, {
                     title:chartTitle,
-                    chartArea: {left: 0},
+                    chartArea: {left: 40},
                     curveType: "function",
+                    hAxis: {showTextEvery: 200},
                     legend: {alignment: "left", position: "right"},
                     width: ($('body').width() - 20),
                     height: 400
@@ -26,56 +30,116 @@ function drawNeighborhoodLineChart(chartTitle, set, neighborhood, start, end) {
 }
 
 function drawNeighborhoodBarChart(chartTitle, set, neighborhood, start, end) {
+
+  var colorSet;
+
   $.getJSON('api.php?set='+set+'&neighborhood='+neighborhood+'&start='+start+'&end='+end, function(data) {
+
     var chartData = google.visualization.arrayToDataTable(data);
+    var showEvery = parseInt(chartData.getNumberOfRows() / 200);      
+      if (data[1].length == 3) {
+        colorSet = ["#2A58A8", "#95B7C7"];
+      }
+      else {
+        colorSet = ["#2A58A8", "#0089C7", "#95B7C7", "#E0E0E0"]
+      }
+
       if(typeof data[1] != 'undefined') {
 
   new google.visualization.BarChart(document.getElementById(set + '_bar')).
       draw(chartData,
            {title:chartTitle,
             legend: {alignment: "left", position: "right"},
-            colors: ["green", "#dddddd"],
+            colors: colorSet,
             width: ($('body').width() - 20),
             height: 400,
-            chartArea: {left: 0},
+            hAxis: {showTextEvery: 200},
+            chartArea: {left: 40},
             isStacked: true}
       )
     }
     else {
       noCharts = true;
     }
-    });
+  });
 }
 
+
+function drawFrequencyLineChart(end, start) {
+  $.getJSON('api.php?set=frequency&start='+start+'&end='+end, function(data) {
+    var chartData = google.visualization.arrayToDataTable(data);
+    var showEvery = parseInt(chartData.getNumberOfRows() / 10);      
+
+      if(typeof data[1] != 'undefined') {
+
+        new google.visualization.LineChart(document.getElementById('overview_line')).
+            draw(chartData, {
+                    title:"SMS Frequency by Neighborhood",
+                    chartArea: {left: 40},
+                    curveType: "function",
+                    legend: {alignment: "left", position: "right"},
+                    width: ($('body').width() - 20),
+                    height: 400,
+                    hAxis: {showTextEvery: 4}
+
+                  });
+          }
+          else {
+            noCharts = true;
+          }
+      });
+
+}
+ 
+
 function loadEverything() {
+    populateAllCharts();
+    $('#chartTabsAll a[href="#overview"]').tab('show');
+
     $.getJSON("api.php?set=neighborhoods", function (data) {
              $.each(data, function (i, data) {
-                 var jsondata = "<li><a href='#'>" + data.location + "</a></li>";
+                 var jsondata = "<li><a href='#' onclick='switchToMapWithLocation("+data.id+")''>" + data.location + "</a></li>";
                  $(jsondata).appendTo("ul.neighborhoods");
              });
       });
-  set_date("1 Year");
+  set_date("neighborhood", "1 Year");
+  set_date("all", "1 Year");
+
   $('#dpStart').datepicker();
   $('#dpEnd').datepicker();
+  $('#dpStart2').datepicker();
+  $('#dpEnd2').datepicker();
   $('.dateRangeSelector').click(function() {
     $('.dateRangeSelector').removeClass('active');
     $(this).addClass("active");
-    set_date($(this).children("a").html())
+    set_date("neighborhood", $(this).children("a").html())
+    set_date("all", $(this).children("a").html())
+    populateAllCharts();
+    populateCharts();
   });
-  initMap();
 }
 
-function set_date(range) {
+function set_date(view, range) {
+
   var today = moment();
-  var tmpDate;
-  var endDate = $('#dpEnd');
-  var startDate = $('#dpStart');
+  var tmpDate, endDate, startDate;
+  if (view == "neighborhood") {
+    endDate = $('#dpEnd');
+    startDate = $('#dpStart');
+    $('#custom_date').hide();
+  }
+  if (view == "all") {
+    endDate = $('#dpEnd2');
+    startDate = $('#dpStart2');
+    $('#custom_date_all').hide();
+  }  
+
   endDate.val(today.format("YYYY-MM-DD"));
   
-  $('#custom_date').hide();
   switch(range) {
     case 'Custom':
       $('#custom_date').show();
+      $('#custom_date_all').show();
       break;
     case 'Today':
         startDate.val(today.format("YYYY-MM-DD"));
@@ -112,12 +176,39 @@ function showAll() {
   $('#view_all').show();
 }
 
-function showNeighborhood() {
-  $('li#neighborhood_link').addClass("active");
+function switchToMapWithLocation(location) {
   $('li#all_link').removeClass("active");
   $('#view_all').hide();
   $('#view_neighborhood').show();
+  $('#contentMap').html("");
+  initMap();
+  showNeighborhood(location);
+}
 
+function showNeighborhood(location) {
+  
+  $.getJSON('api.php?set=location&neighborhood='+location, function(data) {
+      $("#neighborhood").html(data.name + "<span class='label pull-right'>As of "+moment(data.collection_start, "YYYY-MM-DD").fromNow()+"</span>");
+      $("#reports").html(data.reports);
+      $("#customers").html(data.customers);
+      $("#infoBox").show();
+      $('a#active_neighborhood').html(data.name + " <b class='caret'></b>");
+      $("#index_rating").css('width', Math.round(Math.random() * 100));
+      $("#index_value").html(Math.round(Math.random() * 100));
+
+  });
+
+
+  loc = location;
+  populateCharts();
+
+
+}
+
+function populateAllCharts() {
+  var endDate = $('#dpEnd2').val();
+  var startDate = $('#dpStart2').val();
+  drawFrequencyLineChart(endDate, startDate);
 }
 
 function populateCharts() {
@@ -137,8 +228,7 @@ function populateCharts() {
   $('#chartOptions').show();
 }
 
- 
- function initMap() {
+function initMap() {
    
      var options = {
             projection: new OpenLayers.Projection("EPSG:900913"),
@@ -219,7 +309,8 @@ function populateCharts() {
   function click_event(evt)
   {
       event.preventDefault();
-      $.getJSON('api.php?set=location&neighborhood='+evt.feature.attributes.location.value, function(data) {
+      showNeighborhood(evt.feature.attributes.location.value);
+/*      $.getJSON('api.php?set=location&neighborhood='+evt.feature.attributes.location.value, function(data) {
           $("#neighborhood").html(evt.feature.attributes.Name.value + "<span class='label pull-right'>As of "+moment(data.collection_start, "YYYY-MM-DD").fromNow()+"</span>");
           $("#reports").html(data.reports);
           $("#customers").html(data.customers);
@@ -229,7 +320,7 @@ function populateCharts() {
       $("#index_rating").css('width', Math.round(Math.random() * 100));
       loc = evt.feature.attributes.location.value;
       populateCharts();
-      
+  */    
   }
   
   function draw_event(evt)

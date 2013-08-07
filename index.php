@@ -38,20 +38,12 @@
 
           <a class="navbar-brand" href="#">iQUEST</a>
 
-            <ul class="nav navbar-nav pull-right">
-              <li class="dropdown">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown">View <b class="caret"></b></a>
-                 <ul class="dropdown-menu">
-                    <li id="all_link"><a href="#" onclick="showAll()">All</a></li>
-                    <li id="neighborhood_link" class="active"><a href="#" onclick="showNeighborhood()">Neighborhood</a></li>
-                  </ul>
-              </li>
-            </ul>
 
             <ul class="nav navbar-nav pull-right">
               <li class="dropdown">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown">Neighborhoods <b class="caret"></b></a>
+                <a href="#" class="dropdown-toggle" id="active_neighborhood" data-toggle="dropdown">Neighborhood <b class="caret"></b></a>
                  <ul class="dropdown-menu neighborhoods">
+                    <li id="all_link" class="active"><a href="#" onclick="showAll()">All</a></li>
                   </ul>
               </li>
             </ul>
@@ -64,24 +56,33 @@
             <div class="row">
               <div id="contentMap" class="col-lg-12 row"></div>
             </div>
-            <div class="row">
-              <h4 id="neighborhood"></h4>
-            </div>
+           <div id="infoBox" class="row col-lg-12">
+            <h4 id="neighborhood"></h4>
+              <div class="col-lg-4">
+                <table class="table table-hover">
 
-            <div class="row" id="infoBox">
-              <div class="col-lg-3">
-                <dl class="dl-horizontal">
-                  <dt>Customers</dt>
-                  <dd id="customers">200</dd>
-                  <dt>SMS Reports</dt>
-                  <dd id="reports">200</dd>
-                  <dt>Rating</dt>
-                  <dd><div class='progress'><div class='progress-bar progress-bar-success' id="index_rating" style='width: 40%'></div></div></dd>
-                </dl>
-              </div>
+                      <tbody>
+                        <tr>
+                          <td>Customers</td>
+                          <td id="customers"></td>
+                          <td colspan="2"></td>
+                        </tr>
+                        <tr>
+                          <td>SMS Reports</td>
+                          <td id="reports"></td>
+                          <td colspan="2"></td>
+                        </tr>
+                        <tr>
+                          <td>Rating</td>
+                          <td id="index_value"></td>
+                          <td colspan="2"><div class='progress'><div class='progress-bar progress-bar-success' id="index_rating" style='width: 40%'></div></div></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
             </div>
             
-            <div class="row">
+            <div class="row col-lg-12">
               <div class="navbar">
                 <div class="container">
 
@@ -173,11 +174,11 @@
 
                   <ul class="nav navbar-nav">
     <!--                <li class="dateRangeSelector"><a href="#">Today</a></li> -->
-                    <li class="dateRangeSelector active"><a href="#">7 Days</a></li>
+                    <li class="dateRangeSelector"><a href="#">7 Days</a></li>
                     <li class="dateRangeSelector"><a href="#">14 Days</a></li>
                     <li class="dateRangeSelector"><a href="#">30 Days</a></li>
                     <li class="dateRangeSelector"><a href="#">3 Months</a></li>
-                    <li class="dateRangeSelector"><a href="#">1 Year</a></li>
+                    <li class="dateRangeSelector active"><a href="#">1 Year</a></li>
                     <li class="dateRangeSelector"><a href="#">Custom</a></li>
                   </ul>
                   
@@ -196,7 +197,7 @@
               </div>  <!--navbar-->         
             </div> <!-- row -->
             
-            <div class="row" id="chartOptions">
+            <div class="row" id="chartOptionsAll">
               <ul class="nav nav-tabs" id="chartTabsAll">
                 <li>
                   <a data-toggle="tab" href="#overview">

@@ -1329,6 +1329,8 @@
 	<Style><LineStyle><color>ff0000ff</color></LineStyle><PolyStyle><fill>0</fill></PolyStyle></Style>
 	<ExtendedData><SchemaData schemaUrl="#ama">
 		<SimpleData name="Name">KPEHE</SimpleData>
+		<SimpleData name="location">573</SimpleData>
+
 		<SimpleData name="OBJECTID">95</SimpleData>
 		<SimpleData name="LOCATION_I">AY 0</SimpleData>
 		<SimpleData name="CLASS">LOW INCOME</SimpleData>

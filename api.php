@@ -19,6 +19,9 @@ if ($dataSet == "location") {
 if ($dataSet == "neighborhoods") {
 	echo getNeighborhoods();
 }
+if ($dataSet == "frequency") {
+	echo getFrequencyData($startDate, $endDate);
+}
 
 function getNeighborhoods() {
 	include("connect.php");
@@ -33,16 +36,43 @@ function getNeighborhoods() {
 	return json_encode($data);
 }
 
-function getFrequencyData() {
+function getFrequencyData($start, $end) {
 	include("connect.php");
-//	$query = "SELECT COUNT(water) as reports, location, date FROM finalData GROUP BY location, date";
-	$date_query = "SELECT DISTINCT(date) as date FROM finalData";
-	$dates = $mysqli->query($date_query);
-	foreach ($dates as $date) {
-//		$date[0]
+	if ($start == NULL && $end == NULL) {
+		$date_query = "SELECT DISTINCT(date) as date FROM finalData";
+
 	}
-	$result = $mysqli->query($query);
-	$data[] = ["date", ""]
+	else {
+		$date_query = "SELECT DISTINCT(date) as date FROM finalData WHERE date <= '$end' AND date >= '$start'";
+	}
+	$dates = $mysqli->query($date_query);
+	$location_query = "SELECT location FROM locations ORDER BY location ASC";
+	$result = $mysqli->query($location_query);
+	$locations = ["1999-01-31"];
+
+	foreach ($result as $row) {
+		$locations[] = $row["location"];
+	}
+	//first row of chart
+	$data[] = $locations;
+
+	foreach ($dates as $date) {
+		$currentDate = $date["date"];
+		$neighborhoodByDateQuery = "SELECT COUNT(finalData.water) AS reports, finalData.date, locations.location, locations.id FROM finalData INNER JOIN locations ON finalData.location = locations.id WHERE date = '$currentDate' GROUP BY locations.id, date UNION ALL SELECT 0 as reports, '$currentDate' as date, locations.location, locations.id FROM locations WHERE NOT EXISTS (SELECT * FROM finalData WHERE locations.id = finalData.location AND date = '$currentDate') ORDER BY location ASC";
+
+		$statsByDate = $mysqli->query($neighborhoodByDateQuery);
+		//add the date to the first column of the chart
+		$stats[] = $currentDate;		
+		//add the stats for each neighborhood for the specified date
+		foreach ($statsByDate as $row) {
+			$stats[] = intval($row["reports"]);
+		}
+		$data[] = $stats;
+		unset($stats);
+	}
+	return json_encode($data);
+	
+
 }
 
 function getLocationData($loc_num) {
@@ -52,9 +82,10 @@ function getLocationData($loc_num) {
 	$customer_query = "SELECT DISTINCT(number) as customers from finalData WHERE location = $loc_num";
 	$result = $mysqli->query($customer_query);
 	$location->customers = $result->num_rows;
-	$report_query = "SELECT water as reports, date FROM finalData WHERE location = $loc_num  ORDER BY date ASC";
+	$report_query = "SELECT water as reports, date, locations.location FROM finalData INNER JOIN locations ON locations.id = finalData.location WHERE finalData.location = $loc_num  ORDER BY date ASC";
 	$result = $mysqli->query($report_query);
 	$row = $result->fetch_array();
+	$location->name = $row["location"];
 	$location->reports = $result->num_rows;
 	$location->collection_start = $row["date"];
 
@@ -72,9 +103,24 @@ function getFlowData($location, $startingDate = NULL, $endingDate = NULL, $perce
 		) as tmpTable GROUP BY date";
 	$result = $mysqli->query($query);
 	$data[] = ["date", "Over 12 Hours", "4-12 Hours", "Up to 3 Hours", "No Flow"];
-	foreach($result as $row) {
-		$data[] = array($row["date"], intval($row["twelve"]), intval($row["four"]), intval($row["three"]), intval($row["none"]));
+	if ($percentage) {
+		foreach($result as $row) {
+			$total = (intval($row["twelve"]) + intval($row["four"]) + intval($row["three"]) + intval($row["none"]));
+			$twelve = ($row["twelve"] / $total) * 100;
+			$four = ($row["four"] / $total) * 100;
+			$three = ($row["three"] / $total) * 100;
+			$none = ($row["none"] / $total) * 100;
+			$data[] = array($row["date"], $twelve, $four, $three, $none);
+
+		}
 	}
+	else {
+		foreach($result as $row) {
+
+			$data[] = array($row["date"], intval($row["twelve"]), intval($row["four"]), intval($row["three"]), intval($row["none"]));
+		}
+	}
+
 
 	return json_encode($data);
 
