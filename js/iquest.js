@@ -5,6 +5,8 @@
 
 
 function drawNeighborhoodLineChart(chartTitle, set, neighborhood, start, end) {
+    $("#" + set + "_line").html("<img src='img/ajax-loader.gif'/>");
+
   $.getJSON('api.php?set='+set+'&neighborhood='+neighborhood+'&start='+start+'&end='+end+"&percent=FALSE", function(data) {
     var continuousData = new google.visualization.DataTable();
     var dateColumn = 0;
@@ -36,10 +38,14 @@ function drawNeighborhoodLineChart(chartTitle, set, neighborhood, start, end) {
 }
 
 function drawNeighborhoodBarChart(chartTitle, set, neighborhood, start, end) {
+    $("#" + set + "_bar").html("<img src='img/ajax-loader.gif'/>");
 
   var colorSet;
+    $("#" + set + "_bar").html("<img src='img/ajax-loader.gif'/>");
 
   $.getJSON('api.php?set='+set+'&neighborhood='+neighborhood+'&start='+start+'&end='+end+"&percent=TRUE", function(data) {
+    setMostCommonData(set, data.highest);
+
     var continuousData = new google.visualization.DataTable();
     var dateColumn = 0;
     for (var i = 0; i < data.headers.length; i++) {
@@ -81,9 +87,8 @@ function drawNeighborhoodBarChart(chartTitle, set, neighborhood, start, end) {
 
 
 function drawFrequencyLineChart(end, start) {
-
+    $("#overview_line").html("<img src='img/ajax-loader.gif'/>");
   $.getJSON('api.php?set=frequency&start='+start+'&end='+end, function(data) {
-
     var continuousData = new google.visualization.DataTable();
     var dateColumn = 0;
     for (var i = 0; i < data.headers.length; i++) {
@@ -113,6 +118,8 @@ function drawFrequencyLineChart(end, start) {
  
 
 function loadEverything() {
+  set_date("neighborhood", "7 Days");
+  set_date("all", "7 Days");
 
     populateAllCharts();
     $('#chartTabsAll a[href="#overview"]').tab('show');
@@ -123,8 +130,6 @@ function loadEverything() {
                  $(jsondata).appendTo("ul.neighborhoods");
              });
       });
-  set_date("neighborhood", "1 Year");
-  set_date("all", "1 Year");
 
   $('#dpStart').datepicker();
   $('#dpEnd').datepicker();
@@ -139,6 +144,37 @@ function loadEverything() {
     populateAllCharts();
     populateCharts();
   });
+}
+
+function get_indexes() {
+    $.getJSON('api.php?set=index&neighborhood=all&start='+$('#dpStart').val()+'&end='+$('#dpEnd').val(), function (data) {
+/*           $.each(data, function (i, data) {
+               var jsondata = "<li><a href='#' onclick='switchToMapWithLocation("+data.id+")''>" + data.location + "</a></li>";
+               $(jsondata).appendTo("ul.neighborhoods");
+           });*/
+    var continuousData = new google.visualization.DataTable();
+    
+    continuousData.addColumn("string", "Neighborhood");
+    continuousData.addColumn("number", "Index Rating");
+    continuousData.addRows(data);
+
+    
+    var continuousChart = new google.visualization.BarChart(document.getElementById('index_line'));
+    continuousChart.draw(continuousData, {
+                    title:"Index Rating",
+                    chartArea: {left: 150},
+                    curveType: "function",
+                    legend: 'none',
+                    hAxis: {maxValue: 100, minValue: 0},
+                    width: ($('body').width() - 20),
+                    height: 400
+      });    
+
+
+
+
+    });
+
 }
 
 function set_date(view, range) {
@@ -192,35 +228,44 @@ function set_date(view, range) {
 }
 
 function showAll() {
-  $('li#all_link').addClass("active");
-  $('li#neighborhood_link').removeClass("active");
+  $('a#active_neighborhood').html("Neighborhood <b class='caret'></b>");
   $('#view_neighborhood').hide();
   $('#view_all').show();
 }
 
 function switchToMapWithLocation(location) {
   $('li#all_link').removeClass("active");
-  $('#view_all').hide();
   $('#view_neighborhood').show();
+  $('#view_all').hide();
   $('#contentMap').html("");
   initMap();
   showNeighborhood(location);
 }
 
-function showNeighborhood(location) {
-  
-  $.getJSON('api.php?set=location&neighborhood='+location, function(data) {
+function setDataForNeighborhood(location) {
+  $.getJSON('api.php?set=location&neighborhood='+location+'&start='+$('#dpStart').val()+'&end='+$('#dpEnd').val(), function(data) {
       $("#neighborhood").html(data.name + "<span class='label pull-right'>As of "+moment(data.collection_start, "YYYY-MM-DD").fromNow()+"</span>");
       $("#reports").html(data.reports);
+      $("#median").html(data.median);
+      $("#average").html(data.average);
       $("#customers").html(data.customers);
       $("#infoBox").show();
       $('a#active_neighborhood').html(data.name + " <b class='caret'></b>");
-      $("#index_rating").css('width', Math.round(Math.random() * 100));
-      $("#index_value").html(Math.round(Math.random() * 100));
 
   });
+  $.getJSON('api.php?set=index&neighborhood='+location+'&start='+$('#dpStart').val()+'&end='+$('#dpEnd').val(), function(data) {
+      $("#index_rating").css('width', data + '%');
+      $("#index_value").html(data);
 
+  });
+}
 
+function setMostCommonData(set, data) {
+  $("#common_" + set).html(data);
+}
+
+function showNeighborhood(location) {
+  setDataForNeighborhood(location);  
   loc = location;
   populateCharts();
 
@@ -228,21 +273,29 @@ function showNeighborhood(location) {
 }
 
 function populateAllCharts() {
+
   var endDate = $('#dpEnd2').val();
   var startDate = $('#dpStart2').val();
   drawFrequencyLineChart(endDate, startDate);
+  get_indexes();
 }
 
 function populateCharts() {
+  event.preventDefault();
+    $("#common_flow").html("<img src='img/ajax-loader.gif'/>");
+    $("#common_water").html("<img src='img/ajax-loader.gif'/>");
+    $("#common_particles" ).html("<img src='img/ajax-loader.gif'/>");
+    $("#common_taste").html("<img src='img/ajax-loader.gif'/>");
   // Create and populate the data table.
   var endDate = $('#dpEnd').val();
   var startDate = $('#dpStart').val();
-
+  setDataForNeighborhood(loc);
+/*
   drawNeighborhoodLineChart("Amount of Responses Over Time", "water", loc, startDate, endDate); 
   drawNeighborhoodLineChart("Line Chart", "taste", loc, startDate, endDate); 
   drawNeighborhoodLineChart("Line Chart", "particles", loc, startDate, endDate); 
   drawNeighborhoodLineChart("Line Chart", "flow", loc, startDate, endDate); 
-  
+  */
   drawNeighborhoodBarChart("Percent Distribution of Responses", "water", loc, startDate, endDate); 
   drawNeighborhoodBarChart("Percent Distribution of Responses", "taste", loc, startDate, endDate); 
   drawNeighborhoodBarChart("Percent Distribution of Responses", "particles", loc, startDate, endDate);   
@@ -333,17 +386,6 @@ function initMap() {
   {
       event.preventDefault();
       showNeighborhood(evt.feature.attributes.location.value);
-/*      $.getJSON('api.php?set=location&neighborhood='+evt.feature.attributes.location.value, function(data) {
-          $("#neighborhood").html(evt.feature.attributes.Name.value + "<span class='label pull-right'>As of "+moment(data.collection_start, "YYYY-MM-DD").fromNow()+"</span>");
-          $("#reports").html(data.reports);
-          $("#customers").html(data.customers);
-          $("#infoBox").show();
-      });
-
-      $("#index_rating").css('width', Math.round(Math.random() * 100));
-      loc = evt.feature.attributes.location.value;
-      populateCharts();
-  */    
   }
   
   function draw_event(evt)

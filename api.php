@@ -6,6 +6,9 @@ $startDate = $_REQUEST['start'];
 $endDate = $_REQUEST['end'];
 $usePercentage = FALSE;
 
+if ($dataSet == "index") {
+	echo getIndex($neighborhood, $startDate, $endDate);
+}
 if ($dataSet == "flow") {
 	echo getFlowData($neighborhood, $startDate, $endDate, TRUE);
 }
@@ -14,7 +17,7 @@ if ($dataSet == "water" || $dataSet == "particles" || $dataSet == "taste") {
 }
 
 if ($dataSet == "location") {
-	echo getLocationData($neighborhood);
+	echo getLocationData($neighborhood, $startDate, $endDate);
 }
 if ($dataSet == "neighborhoods") {
 	echo getNeighborhoods();
@@ -36,6 +39,54 @@ function getNeighborhoods() {
 	return json_encode($data);
 }
 
+function getIndex($location, $start, $end) {
+	include("connect.php");
+	$points = array("water" => 		array("C" => 1, "D" => 0),
+					"particles" => 	array("N" => 1, "P" => 0),
+					"taste" =>		array("G" => 1, "B" => 0),
+					"hours" =>		array("H" => 3, "L" => 2, "M" => 1, "Z" => 0));
+
+	if ($location == "all") {
+		$location_query = "SELECT id, location FROM locations ORDER BY location ASC";
+		$locations = $mysqli->query($location_query);
+		$data = array();
+		foreach ($locations as $location) {
+			$index_query = "SELECT water, particles, taste, hours FROM finalData WHERE location = " .$location["id"]." AND date >= '$start' AND date <= '$end'";
+			$result = $mysqli->query($index_query);
+			$total = $result->num_rows;
+			$index = 0;
+			foreach($result as $row) {
+				$index += $points["water"][$row["water"]];
+				$index += $points["particles"][$row["particles"]];
+				$index += $points["taste"][$row["taste"]];
+				$index += $points["hours"][$row["hours"]];
+
+			}
+			$data[] = [$location["location"], round($index/($total*4) * 100,2)];
+
+		}
+		return json_encode($data);
+	}
+	else {
+		$index_query = "SELECT water, particles, taste, hours FROM finalData WHERE location = $location AND date >= '$start' AND date <= '$end'";
+		$result = $mysqli->query($index_query);
+		$total = $result->num_rows;
+		$index = 0;
+		foreach($result as $row) {
+			$index += $points["water"][$row["water"]];
+			$index += $points["particles"][$row["particles"]];
+			$index += $points["taste"][$row["taste"]];
+			$index += $points["hours"][$row["hours"]];
+
+		}
+	
+	return round($index/($total*4) * 100,2);
+
+}
+//	0 to 6
+
+
+}
 function getFrequencyData($start, $end) {
 	include("connect.php");
 	$data = new stdClass;
@@ -50,13 +101,10 @@ function getFrequencyData($start, $end) {
 	$dates = $mysqli->query($date_query);
 	$location_query = "SELECT location FROM locations ORDER BY location ASC";
 	$result = $mysqli->query($location_query);
-//	$locations = ["1999-01-31"];
 	$data->headers[] = ["type" => "date", "label" => "Date"];
 	foreach ($result as $row) {
 		$data->headers[] = ["type" => "number", "label" => $row["location"]];
 	}
-	//first row of chart
-//	$data[] = $locations;
 
 	foreach ($dates as $date) {
 		$currentDate = $date["date"];
@@ -79,19 +127,29 @@ function getFrequencyData($start, $end) {
 
 }
 
-function getLocationData($loc_num) {
+function getLocationData($loc_num, $start = '2000-01-01', $end = '2000-01-01') {
 	include("connect.php");
 	$location = new stdClass;
-//	getLocationData($neighborhood);
-	$customer_query = "SELECT DISTINCT(number) as customers from finalData WHERE location = $loc_num";
+	$customer_query = "SELECT DISTINCT(number) as customers, COUNT(water) as reports from finalData WHERE location = $loc_num AND date >= '$start' AND date <= '$end' GROUP BY customers";
 	$result = $mysqli->query($customer_query);
 	$location->customers = $result->num_rows;
-	$report_query = "SELECT water as reports, date, locations.location FROM finalData INNER JOIN locations ON locations.id = finalData.location WHERE finalData.location = $loc_num  ORDER BY date ASC";
+	$unique_reports = array();
+	foreach($result as $row) {
+		$unique_reports[] = $row["reports"];
+	}
+	$report_query = "SELECT water as reports, date, locations.location FROM finalData INNER JOIN locations ON locations.id = finalData.location WHERE finalData.location = $loc_num AND date >= '$start' AND date <= '$end' ORDER BY date ASC";
 	$result = $mysqli->query($report_query);
 	$row = $result->fetch_array();
 	$location->name = $row["location"];
 	$location->reports = $result->num_rows;
 	$location->collection_start = $row["date"];
+	$water_query = "SELECT water ";
+//	most common water color, hours of flow, particles, taste
+/*$c = array_count_values($stuff); 
+$val = array_search(max($c), $c);
+*/
+	$location->median = calculate_median($unique_reports);
+	$location->average = round($location->reports / $location->customers, 2);
 
 	return json_encode($location);
 }
@@ -106,6 +164,7 @@ function getFlowData($location, $startingDate = NULL, $endingDate = NULL, $perce
 		UNION SELECT 0 as twelve, 0 as four, COUNT(hours) as three, 0 as none, date FROM finalData WHERE hours = 'L' AND location = $location AND date > '$startingDate' AND date < '$endingDate' GROUP BY date  
 		UNION SELECT 0 as twelve, 0 as four, 0 as three, COUNT(hours) as none, date FROM finalData WHERE hours = 'Z' AND location = $location AND date > '$startingDate' AND date < '$endingDate' GROUP BY date
 		) as tmpTable GROUP BY date";
+	$sum_total_query = "SELECT SUM(twelve) as twelve, SUM(four) as four, SUM(three) as three, SUM(none) as none FROM (" . $query . ") as tmpTable2";
 	$result = $mysqli->query($query);
 	$data->headers = [["type" => "date", "label" => "Date"],
 					  ["type" => "number", "label" => "Over 12 Hours"],					
@@ -113,13 +172,15 @@ function getFlowData($location, $startingDate = NULL, $endingDate = NULL, $perce
 					  ["type" => "number", "label" => "Up to 3 Hours"],
 					  ["type" => "number", "label" => "No Flow"]];			
 
+	$descriptions = ["Over 12 Hours", "4-12 Hours", "Up to 3 Hours", "No Flow"];
+
 	if ($percentage) {
 		foreach($result as $row) {
 			$total = (intval($row["twelve"]) + intval($row["four"]) + intval($row["three"]) + intval($row["none"]));
-			$twelve = ($row["twelve"] / $total) * 100;
-			$four = ($row["four"] / $total) * 100;
-			$three = ($row["three"] / $total) * 100;
-			$none = ($row["none"] / $total) * 100;
+			$twelve = round(($row["twelve"] / $total) * 100,2);
+			$four = round(($row["four"] / $total) * 100,2);
+			$three = round(($row["three"] / $total) * 100,2);
+			$none = round(($row["none"] / $total) * 100,2);
 			$data->values[] = array($row["date"], $twelve, $four, $three, $none);
 
 		}
@@ -130,6 +191,26 @@ function getFlowData($location, $startingDate = NULL, $endingDate = NULL, $perce
 			$data->values[] = array($row["date"], intval($row["twelve"]), intval($row["four"]), intval($row["three"]), intval($row["none"]));
 		}
 	}
+
+	$result = $mysqli->query($sum_total_query);
+	$row = $result->fetch_array();
+	$highestCount = -1;
+	$i = 0;
+	$pos = 999;
+	$values[] = $row['twelve'];
+	$values[] = $row['four'];
+	$values[] = $row['three'];
+	$values[] = $row['none'];
+	foreach($values as $value) {
+		if ($value > $highestCount) {
+			$pos = $i;
+			$highestCount = $value;
+		}
+		$i++;
+	}
+	$data->sums = $values;
+	$data->highest = $descriptions[$pos];
+//	$data->totals = $descriptions;
 
 
 	return json_encode($data);
@@ -149,7 +230,7 @@ function getData($set, $location, $startingDate = NULL, $endingDate = NULL, $per
 										),
 						"particles" => array(
 										"values" => ["N", "P"],
-										"description" => ["No", "Yes"]
+										"description" => ["Not Present", "Present"]
 										),
 						"taste" => array(
 										"values" => ["G", "B"],
@@ -182,25 +263,59 @@ function getData($set, $location, $startingDate = NULL, $endingDate = NULL, $per
 						  ["type" => "number", "label" => $setArray[$set]["description"][0]],					
 						  ["type" => "number", "label" => $setArray[$set]["description"][1]]];			
 
-
-		if (percentage) {
+		$goodCount = 0;
+		$badCount = 0;
+		if ($percentage) {
 			foreach($result as $row) {
 				$total = (intval($row["good"]) + intval($row["bad"]));
-				$good = ($row["good"] / $total) * 100;
-				$bad = ($row["bad"] / $total) * 100;
+				$good = round(($row["good"] / $total) * 100,2);
+				$bad = round(($row["bad"] / $total) * 100,2);
 				$data->values[] = array($row["date"], $good + "%", $bad + "%");
-
+				if ($good < $bad) {
+					$badCount++;
+				}
+				else {
+					$goodCount++;
+				}
 			}
 		}
 		else {
 			foreach($result as $row) {
 				$data->values[] = array($row["date"], $row["good"], $row["bad"]);
+				if ($row["good"] < $row["bad"]) {
+					$badCount++;
+				}
+				else {
+					$goodCount++;
+				}
 			}
+
+		}
+
+		if ($goodCount < $badCount) {
+			$data->highest = $setArray[$set]["description"][1];
+		}
+		else {
+			$data->highest = $setArray[$set]["description"][0];
 
 		}
 	}
 
 		return json_encode($data);
+}
+
+function calculate_median($arr) {
+    sort($arr);
+    $count = count($arr); //total numbers in array
+    $middleval = floor(($count-1)/2); // find the middle value, or the lowest middle value
+    if($count % 2) { // odd number, middle is the median
+        $median = $arr[$middleval];
+    } else { // even number, calculate avg of 2 medians
+        $low = $arr[$middleval];
+        $high = $arr[$middleval+1];
+        $median = (($low+$high)/2);
+    }
+    return $median;
 }
 
 ?>

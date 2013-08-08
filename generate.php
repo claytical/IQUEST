@@ -1,13 +1,16 @@
 <?php
-
-	generate_sms(573, 1000);
+	$locations = [102, 256, 568,252,279,626];//573, 282, 462, 869, 101];// 
+	foreach ($locations as $location) {
+		generate_sms($location, rand(500,1500));
+	}
+//	generate_sms(462, 1000);
 	function generate_sms($location, $amount) {
 		include ("connect.php");
 
-		$report = array("water" => ["C", "D"],
-			  			"particles" => ["N", "P"],
-			  			"taste" => ["G", "B"],
-			  			"hours" => ["H", "M", "L", "Z"]);
+		$report = array("water" => ["C", "D", "D", "D"],
+			  			"particles" => ["N", "P", "N"],
+			  			"taste" => ["G", "B", "G", "B", "B"],
+			  			"hours" => ["H", "M", "L", "Z", "Z", "L", "L", "L", "L", "M", "M"]);
 
 		$start = 0;
 		while ($start <= $amount) {
