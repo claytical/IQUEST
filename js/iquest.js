@@ -81,28 +81,33 @@ function drawNeighborhoodBarChart(chartTitle, set, neighborhood, start, end) {
 
 
 function drawFrequencyLineChart(end, start) {
+
   $.getJSON('api.php?set=frequency&start='+start+'&end='+end, function(data) {
-    var chartData = google.visualization.arrayToDataTable(data);
-    var showEvery = parseInt(chartData.getNumberOfRows() / 10);      
 
-      if(typeof data[1] != 'undefined') {
+    var continuousData = new google.visualization.DataTable();
+    var dateColumn = 0;
+    for (var i = 0; i < data.headers.length; i++) {
+      continuousData.addColumn(data.headers[i]["type"], data.headers[i]["label"]);
+    }
+    for (var i = 0; i < data.values.length; i++) {
+      //convert mysql date to javascript date
 
-        new google.visualization.LineChart(document.getElementById('overview_line')).
-            draw(chartData, {
+        var tmpArray = data.values[i];
+        tmpArray[dateColumn] = new Date([data.values[i][dateColumn]]);
+        continuousData.addRow(tmpArray);
+    }
+
+    
+    var continuousChart = new google.visualization.LineChart(document.getElementById('overview_line'));
+    continuousChart.draw(continuousData, {
                     title:"SMS Frequency by Neighborhood",
                     chartArea: {left: 40},
                     curveType: "function",
                     legend: {alignment: "left", position: "right"},
                     width: ($('body').width() - 20),
-                    height: 400,
-                    hAxis: {showTextEvery: 4}
-
-                  });
-          }
-          else {
-            noCharts = true;
-          }
-      });
+                    height: 400
+      });    
+    });
 
 }
  

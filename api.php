@@ -38,36 +38,40 @@ function getNeighborhoods() {
 
 function getFrequencyData($start, $end) {
 	include("connect.php");
+	$data = new stdClass;
+
 	if ($start == NULL && $end == NULL) {
-		$date_query = "SELECT DISTINCT(date) as date FROM finalData";
+		$date_query = "SELECT DISTINCT(date) as date FROM finalData ORDER BY date ASC";
 
 	}
 	else {
-		$date_query = "SELECT DISTINCT(date) as date FROM finalData WHERE date <= '$end' AND date >= '$start'";
+		$date_query = "SELECT DISTINCT(date) as date FROM finalData WHERE date <= '$end' AND date >= '$start' ORDER BY date ASC";
 	}
 	$dates = $mysqli->query($date_query);
 	$location_query = "SELECT location FROM locations ORDER BY location ASC";
 	$result = $mysqli->query($location_query);
-	$locations = ["1999-01-31"];
-
+//	$locations = ["1999-01-31"];
+	$data->headers[] = ["type" => "date", "label" => "Date"];
 	foreach ($result as $row) {
-		$locations[] = $row["location"];
+		$data->headers[] = ["type" => "number", "label" => $row["location"]];
 	}
 	//first row of chart
-	$data[] = $locations;
+//	$data[] = $locations;
 
 	foreach ($dates as $date) {
 		$currentDate = $date["date"];
-		$neighborhoodByDateQuery = "SELECT COUNT(finalData.water) AS reports, finalData.date, locations.location, locations.id FROM finalData INNER JOIN locations ON finalData.location = locations.id WHERE date = '$currentDate' GROUP BY locations.id, date UNION ALL SELECT 0 as reports, '$currentDate' as date, locations.location, locations.id FROM locations WHERE NOT EXISTS (SELECT * FROM finalData WHERE locations.id = finalData.location AND date = '$currentDate') ORDER BY location ASC";
+		$neighborhoodByDateQuery = "SELECT COUNT(finalData.water) AS reports, finalData.date, locations.location, locations.id FROM finalData INNER JOIN locations ON finalData.location = locations.id WHERE date = '$currentDate' GROUP BY locations.id, date UNION ALL SELECT 0 as reports, '$currentDate' as date, locations.location, locations.id FROM locations WHERE NOT EXISTS (SELECT * FROM finalData WHERE locations.id = finalData.location AND date = '$currentDate') ORDER BY location, date ASC";
 
 		$statsByDate = $mysqli->query($neighborhoodByDateQuery);
 		//add the date to the first column of the chart
 		$stats[] = $currentDate;		
 		//add the stats for each neighborhood for the specified date
+
 		foreach ($statsByDate as $row) {
 			$stats[] = intval($row["reports"]);
 		}
-		$data[] = $stats;
+
+		$data->values[] = $stats;
 		unset($stats);
 	}
 	return json_encode($data);
