@@ -7,7 +7,7 @@ $endDate = $_REQUEST['end'];
 $usePercentage = FALSE;
 
 if ($dataSet == "flow") {
-	echo getFlowData($neighborhood, $startDate, $endDate);
+	echo getFlowData($neighborhood, $startDate, $endDate, TRUE);
 }
 if ($dataSet == "water" || $dataSet == "particles" || $dataSet == "taste") {
 	echo getData($dataSet, $neighborhood, $startDate, $endDate);
@@ -94,6 +94,7 @@ function getLocationData($loc_num) {
 
 function getFlowData($location, $startingDate = NULL, $endingDate = NULL, $percentage = TRUE) {
 	include("connect.php");
+	$data = new stdClass;
 
 	$query = "SELECT SUM(twelve) as twelve, SUM(four) as four, SUM(three) as three, SUM(none) as none, date FROM (
 		SELECT COUNT(hours) as twelve, 0 as four, 0 as three, 0 as none, date FROM finalData WHERE hours = 'H' AND location = $location AND date > '$startingDate' AND date < '$endingDate' GROUP BY date 
@@ -102,7 +103,12 @@ function getFlowData($location, $startingDate = NULL, $endingDate = NULL, $perce
 		UNION SELECT 0 as twelve, 0 as four, 0 as three, COUNT(hours) as none, date FROM finalData WHERE hours = 'Z' AND location = $location AND date > '$startingDate' AND date < '$endingDate' GROUP BY date
 		) as tmpTable GROUP BY date";
 	$result = $mysqli->query($query);
-	$data[] = ["date", "Over 12 Hours", "4-12 Hours", "Up to 3 Hours", "No Flow"];
+	$data->headers = [["type" => "date", "label" => "Date"],
+					  ["type" => "number", "label" => "Over 12 Hours"],					
+					  ["type" => "number", "label" => "4-12 Hours"],					
+					  ["type" => "number", "label" => "Up to 3 Hours"],
+					  ["type" => "number", "label" => "No Flow"]];			
+
 	if ($percentage) {
 		foreach($result as $row) {
 			$total = (intval($row["twelve"]) + intval($row["four"]) + intval($row["three"]) + intval($row["none"]));
@@ -110,14 +116,14 @@ function getFlowData($location, $startingDate = NULL, $endingDate = NULL, $perce
 			$four = ($row["four"] / $total) * 100;
 			$three = ($row["three"] / $total) * 100;
 			$none = ($row["none"] / $total) * 100;
-			$data[] = array($row["date"], $twelve, $four, $three, $none);
+			$data->values[] = array($row["date"], $twelve, $four, $three, $none);
 
 		}
 	}
 	else {
 		foreach($result as $row) {
 
-			$data[] = array($row["date"], intval($row["twelve"]), intval($row["four"]), intval($row["three"]), intval($row["none"]));
+			$data->values[] = array($row["date"], intval($row["twelve"]), intval($row["four"]), intval($row["three"]), intval($row["none"]));
 		}
 	}
 
@@ -130,6 +136,7 @@ function getFlowData($location, $startingDate = NULL, $endingDate = NULL, $perce
 function getData($set, $location, $startingDate = NULL, $endingDate = NULL, $percentage = TRUE) {
 
 	include("connect.php");
+	$data = new stdClass;
 
 	$setArray = array(
 						"water" => array(
@@ -167,19 +174,23 @@ function getData($set, $location, $startingDate = NULL, $endingDate = NULL, $per
 
 		$query .= ") as tmpTable GROUP BY date";
 		$result = $mysqli->query($query);
-		$data[] = ["date", $setArray[$set]["description"][0], $setArray[$set]["description"][1]];
+		$data->headers = [["type" => "date", "label" => "Date"],
+						  ["type" => "number", "label" => $setArray[$set]["description"][0]],					
+						  ["type" => "number", "label" => $setArray[$set]["description"][1]]];			
+
 
 		if (percentage) {
 			foreach($result as $row) {
 				$total = (intval($row["good"]) + intval($row["bad"]));
 				$good = ($row["good"] / $total) * 100;
 				$bad = ($row["bad"] / $total) * 100;
-				$data[] = array($row["date"], $good + "%", $bad + "%");
+				$data->values[] = array($row["date"], $good + "%", $bad + "%");
+
 			}
 		}
 		else {
 			foreach($result as $row) {
-				$data[] = array($row["date"], $row["good"], $row["bad"]);
+				$data->values[] = array($row["date"], $row["good"], $row["bad"]);
 			}
 
 		}

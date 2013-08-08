@@ -1,31 +1,37 @@
  var map, a, vector_style_2, Hazard;
  var loc;
  var noCharts = true;
+ var googleChart;
 
 
 function drawNeighborhoodLineChart(chartTitle, set, neighborhood, start, end) {
   $.getJSON('api.php?set='+set+'&neighborhood='+neighborhood+'&start='+start+'&end='+end+"&percent=FALSE", function(data) {
-    var chartData = google.visualization.arrayToDataTable(data);
-    var showEvery = parseInt(chartData.getNumberOfRows() / 4);      
+    var continuousData = new google.visualization.DataTable();
+    var dateColumn = 0;
+    for (var i = 0; i < data.headers.length; i++) {
+      continuousData.addColumn(data.headers[i]["type"], data.headers[i]["label"]);
+      if (data.headers[i]["type"] == "date") {
+        dateColumn = i;
+      }
+    }
+    for (var i = 0; i < data.values.length; i++) {
+      //convert mysql date to javascript date
+        var tmpArray = data.values[i];
+        tmpArray[dateColumn] = new Date([data.values[i][dateColumn]]);
+        continuousData.addRow(tmpArray);
+    }
 
-      if(typeof data[1] != 'undefined') {
-
-        new google.visualization.LineChart(document.getElementById(set + '_line')).
-            draw(chartData, {
+    
+    var continuousChart = new google.visualization.LineChart(document.getElementById(set + '_line'));
+    continuousChart.draw(continuousData, {
                     title:chartTitle,
                     chartArea: {left: 40},
                     curveType: "function",
-                    hAxis: {showTextEvery: 200},
                     legend: {alignment: "left", position: "right"},
                     width: ($('body').width() - 20),
                     height: 400
-
-                  });
-          }
-          else {
-            noCharts = true;
-          }
-      });
+      });    
+  });
 
 }
 
@@ -33,34 +39,43 @@ function drawNeighborhoodBarChart(chartTitle, set, neighborhood, start, end) {
 
   var colorSet;
 
-  $.getJSON('api.php?set='+set+'&neighborhood='+neighborhood+'&start='+start+'&end='+end, function(data) {
-
-    var chartData = google.visualization.arrayToDataTable(data);
-    var showEvery = parseInt(chartData.getNumberOfRows() / 200);      
-      if (data[1].length == 3) {
+  $.getJSON('api.php?set='+set+'&neighborhood='+neighborhood+'&start='+start+'&end='+end+"&percent=TRUE", function(data) {
+    var continuousData = new google.visualization.DataTable();
+    var dateColumn = 0;
+    for (var i = 0; i < data.headers.length; i++) {
+      continuousData.addColumn(data.headers[i]["type"], data.headers[i]["label"]);
+      if (data.headers[i]["type"] == "date") {
+        dateColumn = i;
+      }
+    }
+    for (var i = data.values.length - 1; i > 0; i--) {
+      //convert mysql date to javascript date
+        var tmpArray = data.values[i];
+        tmpArray[dateColumn] = new Date([data.values[i][dateColumn]]);
+        continuousData.addRow(tmpArray);
+    }
+    
+//    var showEvery = parseInt(chartData.getNumberOfRows() / 200);      
+      if (data.values[0].length == 3) {
         colorSet = ["#2A58A8", "#95B7C7"];
       }
       else {
         colorSet = ["#2A58A8", "#0089C7", "#95B7C7", "#E0E0E0"]
       }
 
-      if(typeof data[1] != 'undefined') {
+//            vAxis: {format:'#.#%'},
 
-  new google.visualization.BarChart(document.getElementById(set + '_bar')).
-      draw(chartData,
+      var continuousChart = new google.visualization.AreaChart(document.getElementById(set + '_bar')).
+          draw(continuousData,
            {title:chartTitle,
             legend: {alignment: "left", position: "right"},
             colors: colorSet,
             width: ($('body').width() - 20),
             height: 400,
-            hAxis: {showTextEvery: 200},
-            chartArea: {left: 40},
+            chartArea: {left: 60},
             isStacked: true}
       )
-    }
-    else {
-      noCharts = true;
-    }
+    
   });
 }
 
@@ -93,6 +108,7 @@ function drawFrequencyLineChart(end, start) {
  
 
 function loadEverything() {
+
     populateAllCharts();
     $('#chartTabsAll a[href="#overview"]').tab('show');
 
@@ -110,6 +126,7 @@ function loadEverything() {
   $('#dpStart2').datepicker();
   $('#dpEnd2').datepicker();
   $('.dateRangeSelector').click(function() {
+    event.preventDefault();
     $('.dateRangeSelector').removeClass('active');
     $(this).addClass("active");
     set_date("neighborhood", $(this).children("a").html())
@@ -220,9 +237,10 @@ function populateCharts() {
   drawNeighborhoodLineChart("Line Chart", "taste", loc, startDate, endDate); 
   drawNeighborhoodLineChart("Line Chart", "particles", loc, startDate, endDate); 
   drawNeighborhoodLineChart("Line Chart", "flow", loc, startDate, endDate); 
+  
   drawNeighborhoodBarChart("Percent Distribution of Responses", "water", loc, startDate, endDate); 
   drawNeighborhoodBarChart("Percent Distribution of Responses", "taste", loc, startDate, endDate); 
-  drawNeighborhoodBarChart("Percent Distribution of Responses", "particles", loc, startDate, endDate); 
+  drawNeighborhoodBarChart("Percent Distribution of Responses", "particles", loc, startDate, endDate);   
   drawNeighborhoodBarChart("Percent Distribution of Responses", "flow", loc, startDate, endDate); 
   $('#chartTabs a[href="#water"]').tab('show');
   $('#chartOptions').show();
