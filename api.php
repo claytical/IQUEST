@@ -51,7 +51,7 @@ function getIndex($location, $start, $end) {
 		$locations = $mysqli->query($location_query);
 		$data = array();
 		foreach ($locations as $location) {
-			$index_query = "SELECT water, particles, taste, hours FROM finalData WHERE location = " .$location["id"]." AND date >= '$start' AND date <= '$end'";
+			$index_query = "SELECT water, particles, taste, hours FROM reports WHERE location = " .$location["id"]." AND date >= '$start' AND date <= '$end'";
 			$result = $mysqli->query($index_query);
 			$total = $result->num_rows;
 			$index = 0;
@@ -68,7 +68,7 @@ function getIndex($location, $start, $end) {
 		return json_encode($data);
 	}
 	else {
-		$index_query = "SELECT water, particles, taste, hours FROM finalData WHERE location = $location AND date >= '$start' AND date <= '$end'";
+		$index_query = "SELECT water, particles, taste, hours FROM reports WHERE location = $location AND date >= '$start' AND date <= '$end'";
 		$result = $mysqli->query($index_query);
 		$total = $result->num_rows;
 		$index = 0;
@@ -83,7 +83,6 @@ function getIndex($location, $start, $end) {
 	return round($index/($total*4) * 100,2);
 
 }
-//	0 to 6
 
 
 }
@@ -92,11 +91,11 @@ function getFrequencyData($start, $end) {
 	$data = new stdClass;
 
 	if ($start == NULL && $end == NULL) {
-		$date_query = "SELECT DISTINCT(date) as date FROM finalData ORDER BY date ASC";
+		$date_query = "SELECT DISTINCT(date) as date FROM reports ORDER BY date ASC";
 
 	}
 	else {
-		$date_query = "SELECT DISTINCT(date) as date FROM finalData WHERE date <= '$end' AND date >= '$start' ORDER BY date ASC";
+		$date_query = "SELECT DISTINCT(date) as date FROM reports WHERE date <= '$end' AND date >= '$start' ORDER BY date ASC";
 	}
 	$dates = $mysqli->query($date_query);
 	$location_query = "SELECT location FROM locations ORDER BY location ASC";
@@ -108,7 +107,7 @@ function getFrequencyData($start, $end) {
 
 	foreach ($dates as $date) {
 		$currentDate = $date["date"];
-		$neighborhoodByDateQuery = "SELECT COUNT(finalData.water) AS reports, finalData.date, locations.location, locations.id FROM finalData INNER JOIN locations ON finalData.location = locations.id WHERE date = '$currentDate' GROUP BY locations.id, date UNION ALL SELECT 0 as reports, '$currentDate' as date, locations.location, locations.id FROM locations WHERE NOT EXISTS (SELECT * FROM finalData WHERE locations.id = finalData.location AND date = '$currentDate') ORDER BY location, date ASC";
+		$neighborhoodByDateQuery = "SELECT COUNT(reports.water) AS reports, reports.date, locations.location, locations.id FROM reports INNER JOIN locations ON reports.location = locations.id WHERE date = '$currentDate' GROUP BY locations.id, date UNION ALL SELECT 0 as reports, '$currentDate' as date, locations.location, locations.id FROM locations WHERE NOT EXISTS (SELECT * FROM reports WHERE locations.id = reports.location AND date = '$currentDate') ORDER BY location, date ASC";
 
 		$statsByDate = $mysqli->query($neighborhoodByDateQuery);
 		//add the date to the first column of the chart
@@ -130,14 +129,14 @@ function getFrequencyData($start, $end) {
 function getLocationData($loc_num, $start = '2000-01-01', $end = '2000-01-01') {
 	include("connect.php");
 	$location = new stdClass;
-	$customer_query = "SELECT DISTINCT(number) as customers, COUNT(water) as reports from finalData WHERE location = $loc_num AND date >= '$start' AND date <= '$end' GROUP BY customers";
+	$customer_query = "SELECT DISTINCT(number) as customers, COUNT(water) as reports from reports WHERE location = $loc_num AND date >= '$start' AND date <= '$end' GROUP BY customers";
 	$result = $mysqli->query($customer_query);
 	$location->customers = $result->num_rows;
 	$unique_reports = array();
 	foreach($result as $row) {
 		$unique_reports[] = $row["reports"];
 	}
-	$report_query = "SELECT water as reports, date, locations.location FROM finalData INNER JOIN locations ON locations.id = finalData.location WHERE finalData.location = $loc_num AND date >= '$start' AND date <= '$end' ORDER BY date ASC";
+	$report_query = "SELECT water as reports, date, locations.location FROM reports INNER JOIN locations ON locations.id = reports.location WHERE reports.location = $loc_num AND date >= '$start' AND date <= '$end' ORDER BY date ASC";
 	$result = $mysqli->query($report_query);
 	$row = $result->fetch_array();
 	$location->name = $row["location"];
@@ -159,10 +158,10 @@ function getFlowData($location, $startingDate = NULL, $endingDate = NULL, $perce
 	$data = new stdClass;
 
 	$query = "SELECT SUM(twelve) as twelve, SUM(four) as four, SUM(three) as three, SUM(none) as none, date FROM (
-		SELECT COUNT(hours) as twelve, 0 as four, 0 as three, 0 as none, date FROM finalData WHERE hours = 'H' AND location = $location AND date > '$startingDate' AND date < '$endingDate' GROUP BY date 
-		UNION SELECT 0 as twelve, COUNT(hours) as four, 0 as three, 0 as none, date FROM finalData WHERE hours = 'M' AND location = $location AND date > '$startingDate' AND date < '$endingDate' GROUP BY date  
-		UNION SELECT 0 as twelve, 0 as four, COUNT(hours) as three, 0 as none, date FROM finalData WHERE hours = 'L' AND location = $location AND date > '$startingDate' AND date < '$endingDate' GROUP BY date  
-		UNION SELECT 0 as twelve, 0 as four, 0 as three, COUNT(hours) as none, date FROM finalData WHERE hours = 'Z' AND location = $location AND date > '$startingDate' AND date < '$endingDate' GROUP BY date
+		SELECT COUNT(hours) as twelve, 0 as four, 0 as three, 0 as none, date FROM reports WHERE hours = 'H' AND location = $location AND date > '$startingDate' AND date < '$endingDate' GROUP BY date 
+		UNION SELECT 0 as twelve, COUNT(hours) as four, 0 as three, 0 as none, date FROM reports WHERE hours = 'M' AND location = $location AND date > '$startingDate' AND date < '$endingDate' GROUP BY date  
+		UNION SELECT 0 as twelve, 0 as four, COUNT(hours) as three, 0 as none, date FROM reports WHERE hours = 'L' AND location = $location AND date > '$startingDate' AND date < '$endingDate' GROUP BY date  
+		UNION SELECT 0 as twelve, 0 as four, 0 as three, COUNT(hours) as none, date FROM reports WHERE hours = 'Z' AND location = $location AND date > '$startingDate' AND date < '$endingDate' GROUP BY date
 		) as tmpTable GROUP BY date";
 	$sum_total_query = "SELECT SUM(twelve) as twelve, SUM(four) as four, SUM(three) as three, SUM(none) as none FROM (" . $query . ") as tmpTable2";
 	$result = $mysqli->query($query);
@@ -247,11 +246,11 @@ function getData($set, $location, $startingDate = NULL, $endingDate = NULL, $per
 		$query .= "SELECT SUM(good) as good, SUM(bad) as bad, date FROM (";
 		foreach ($setArray[$set]["values"] as $key => $value) {
 			if ($key == 0) {
-				$query .= " SELECT COUNT($set) as good, 0 as bad, date FROM finalData WHERE $set = '$value' AND date > '$startingDate' AND date < '$endingDate' GROUP BY date ";
+				$query .= " SELECT COUNT($set) as good, 0 as bad, date FROM reports WHERE $set = '$value' AND date > '$startingDate' AND date < '$endingDate' GROUP BY date ";
 			}
 			else {
 
-				$query .= " UNION SELECT 0 as good, COUNT($set) as bad, date FROM finalData WHERE $set = '$value' AND date > '$startingDate' AND date < '$endingDate' GROUP BY date ";
+				$query .= " UNION SELECT 0 as good, COUNT($set) as bad, date FROM reports WHERE $set = '$value' AND date > '$startingDate' AND date < '$endingDate' GROUP BY date ";
 
 			}
 

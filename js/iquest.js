@@ -161,7 +161,7 @@ function get_indexes() {
     
     var continuousChart = new google.visualization.BarChart(document.getElementById('index_line'));
     continuousChart.draw(continuousData, {
-                    title:"Index Rating",
+                    title:"Neighborhoods",
                     chartArea: {left: 150},
                     curveType: "function",
                     legend: 'none',

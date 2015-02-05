@@ -24,7 +24,7 @@
 			$hours = $report["hours"][$h];
 			$date = randomDate("2012-01-01", "2013-12-31");
 			$number = rand(1, 200);
-			$query = "INSERT INTO finalData (water, particles, taste, hours, date, number, location) VALUES ('$water', '$particles', '$taste', '$hours', '$date', '$number', $location)";
+			$query = "INSERT INTO reports (water, particles, taste, hours, date, number, location) VALUES ('$water', '$particles', '$taste', '$hours', '$date', '$number', $location)";
 			$mysqli->query($query);
 
     		$start++;  
